@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../feed/feed_screen.dart';
 import '../profile/profile_screen.dart';
+
+import '../auth/models/feed_item.dart';
+import '../auth/services/feed_service.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -17,32 +20,32 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedCategory = 'CAFE';
   String selectedType = 'ALL';
   int currentIndex = 0;
-  final List<Map<String, String>> updates = [
-    {
-      'business': 'Star Cafe',
-      'category': 'CAFE',
-      'title': 'Buy 1 Get 1 Free',
-      'description': 'Valid till Sunday',
-      'distance': '0.8 KM',
-      'time': '2h ago',
-    },
-    {
-      'business': 'Fitness Hub',
-      'category': 'GYM',
-      'title': '20% Off Membership',
-      'description': 'Limited period offer',
-      'distance': '1.2 KM',
-      'time': '5h ago',
-    },
-    {
-      'business': 'Book World',
-      'category': 'OTHER',
-      'title': 'Weekend Sale',
-      'description': 'Flat 15% Off',
-      'distance': '1.8 KM',
-      'time': '1 day ago',
-    },
-  ];
+  final FeedService feedService = FeedService();
+
+  List<FeedItem> updates = [];
+  @override
+  void initState() {
+    super.initState();
+    loadFeed();
+  }
+  bool isLoading = true;
+  Future<void> loadFeed() async {
+    print('LOAD FEED CALLED');
+    try {
+      final result =
+      await feedService.getFeed();
+
+      setState(() {
+        updates = result;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('ERROR: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void openFilters() {
     showModalBottomSheet(
@@ -116,9 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       spacing: 8,
                       children: [
                         'ALL',
-                        'OFFERS',
-                        'EVENTS',
-                        'ANNOUNCEMENTS',
+                        'OFFER',
+                        'EVENT',
+                        'ANNOUNCEMENT',
+                        'PRODUCT',
+                        'SERVICE',
                       ].map((type) {
                         return ChoiceChip(
                           label: Text(type),
@@ -139,14 +144,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
+
                           setState(() {
-                            selectedRadius =
-                                tempRadius;
-                            selectedType =
-                                tempType;
+                            selectedRadius = tempRadius;
+                            selectedType = tempType;
                           });
 
                           Navigator.pop(context);
+
+                          loadFilteredFeed();
                         },
                         child:
                         const Text('Apply'),
@@ -230,11 +236,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       selected:
                       selectedCategory ==
                           category,
-                      onSelected: (_) {
-                        setState(() {
-                          selectedCategory =
-                              category;
-                        });
+                          onSelected: (_) {
+
+                          setState(() {
+                          selectedCategory = category;
+                          });
+
+                          loadFilteredFeed();
+
                       },
                     ),
                   );
@@ -260,7 +269,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
 
             Expanded(
-              child: updates.isEmpty
+              child: isLoading
+                  ? const Center(
+                child:
+                CircularProgressIndicator(),
+              )
+                  : updates.isEmpty
                   ? const Center(
                 child: Column(
                   mainAxisSize:
@@ -284,8 +298,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 updates.length,
                 itemBuilder:
                     (context, index) {
-                  final item =
-                  updates[index];
+                      final FeedItem item =
+                      updates[index];
 
                   return Card(
                     margin:
@@ -328,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
 
                           Text(
-                            item['business']!,
+                            item.businessName,
                             style:
                             const TextStyle(
                               fontSize:
@@ -345,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           Chip(
                             label: Text(
-                              item['category']!,
+                              item.category,
                             ),
                           ),
 
@@ -354,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
 
                           Text(
-                            item['title']!,
+                            item.title,
                             style:
                             const TextStyle(
                               fontSize:
@@ -370,8 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
 
                           Text(
-                            item[
-                            'description']!,
+                            item.description,
                           ),
 
                           const SizedBox(
@@ -389,13 +402,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 4,
                               ),
                               Text(
-                                item[
-                                'distance']!,
+                                item.address,
                               ),
                               const Spacer(),
                               Text(
-                                item[
-                                'time']!,
+                                item.updateType,
                               ),
                             ],
                           ),
@@ -470,4 +481,40 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     );
   }
+
+
+  Future<void> loadFilteredFeed() async {
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+
+      String url =
+          '${FeedService.baseUrl}/feed'
+          '?category=$selectedCategory';
+
+      if (selectedType != 'ALL') {
+        url += '&type=$selectedType';
+      }
+
+      final result =
+      await feedService.getFilteredFeed(
+        url,
+      );
+
+      setState(() {
+        updates = result;
+        isLoading = false;
+      });
+
+    } catch (e) {
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
 }
