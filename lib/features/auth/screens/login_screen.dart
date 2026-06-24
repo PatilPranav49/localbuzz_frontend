@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:localbuzz_app/features/auth/screens/splash_screen.dart';
+import 'package:localbuzz_app/features/navigation/main_screen.dart';
 import '../../../core/storage/token_storage.dart';
 import '../../feed/feed_screen.dart';
 import '../../home/home_screen.dart';
@@ -44,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
+          builder: (_) => const MainScreen(),
         ),
       );
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:localbuzz_app/features/home/home_screen.dart';
+import 'package:localbuzz_app/features/navigation/main_screen.dart';
 
 import '../../../core/storage/token_storage.dart';
 import 'login_screen.dart';
@@ -37,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
+          builder: (_) => const MainScreen(),
         ),
       );
     }

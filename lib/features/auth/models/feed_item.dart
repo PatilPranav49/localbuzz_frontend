@@ -1,9 +1,9 @@
 class FeedItem {
   final int updateId;
-  final int businessId;
+  final int? businessId;
   final String businessName;
-  final String category;
-  final String address;
+  final String? category;
+  final String? address;
   final String? coverImageUrl;
   final String title;
   final String description;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:localbuzz_app/features/auth/screens/profile_service.dart';
 
-import '../auth/models/user_profile.dart';
-import '../auth/screens/login_screen.dart';
-import '../../core/storage/token_storage.dart';
-import '../auth/screens/profile_service.dart';
+import '../../../core/storage/token_storage.dart';
 
+import '../models/user_profile.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,16 +37,12 @@ class _ProfileScreenState
       final result =
       await profileService.getProfile();
 
-      if (!mounted) return;
-
       setState(() {
         profile = result;
         isLoading = false;
       });
 
     } catch (e) {
-
-      if (!mounted) return;
 
       setState(() {
         isLoading = false;
@@ -127,6 +123,15 @@ class _ProfileScreenState
 
             const SizedBox(
               height: 30,
+            ),
+
+            ListTile(
+              leading: const Icon(
+                Icons.business,
+              ),
+              title: const Text(
+                'My Businesses',
+              ),
             ),
 
             ListTile(
