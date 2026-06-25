@@ -21,10 +21,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> checkLogin() async {
     final token = await TokenStorage.getToken();
+    final role = await TokenStorage.getRole();
 
+    //
+    print(await TokenStorage.getToken());
+    print(await TokenStorage.getRole());
+    //
     if (!mounted) return;
 
-    if (token == null || token.isEmpty) {
+    if (token == null ||
+        token.isEmpty ||
+        role == null ||
+        role.isEmpty) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -32,13 +40,13 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
-      print('User already logged in');
-      print(token);
+      print("TOKEN: $token");
+      print("ROLE : $role");
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const MainScreen(),
+          builder: (_) => MainScreen(role: role),
         ),
       );
     }

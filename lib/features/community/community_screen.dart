@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../community_admin/screens/create_community_post_screen.dart';
 import 'models/community_post.dart';
 import 'services/community_service.dart';
 
 class CommunityScreen extends StatefulWidget {
-  const CommunityScreen({super.key});
+
+  final bool canCreate;
+
+  const CommunityScreen({
+    super.key,
+    this.canCreate = false,
+  });
 
   @override
   State<CommunityScreen> createState() =>
@@ -30,14 +37,17 @@ class _CommunityScreenState
 
   Future<void> loadPosts() async {
 
+    setState(() {
+      isLoading = true;
+    });
+
     final position =
     await Geolocator.getCurrentPosition();
 
     print('LAT: ${position.latitude}');
     print('LNG: ${position.longitude}');
 
-    final result =
-    await service.getPosts(
+    final result = await service.getPosts(
       position.latitude,
       position.longitude,
     );
@@ -51,79 +61,90 @@ class _CommunityScreenState
       isLoading = false;
     });
   }
+
+  Future<void> createPost() async {
+
+    final created = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+        const CreateCommunityPostScreen(),
+      ),
+    );
+
+    if (created == true) {
+      await loadPosts();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
+
       appBar: AppBar(
-        title: const Text(
-          'Community',
-        ),
+        title: const Text("Community"),
       ),
+
+      floatingActionButton: widget.canCreate
+          ? FloatingActionButton(
+        onPressed: createPost,
+        child: const Icon(Icons.add),
+      )
+          : null,
+
       body: isLoading
           ? const Center(
-        child:
-        CircularProgressIndicator(),
+        child: CircularProgressIndicator(),
       )
-          : ListView.builder(
-        itemCount: posts.length,
-        itemBuilder:
-            (context, index) {
+          : RefreshIndicator(
+        onRefresh: loadPosts,
+        child: ListView.builder(
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
 
-          final post =
-          posts[index];
+            final post = posts[index];
 
-          return Card(
-            margin:
-            const EdgeInsets.all(10),
-            child: Padding(
-              padding:
-              const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
-                children: [
+            return Card(
+              margin: const EdgeInsets.all(10),
+              child: Padding(
+                padding:
+                const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
 
-                  Chip(
-                    label:
-                    Text(post.type),
-                  ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
-                  Text(
-                    post.title,
-                    style:
-                    const TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
+                    Chip(
+                      label: Text(post.type),
                     ),
-                  ),
 
-                  const SizedBox(
-                    height: 8,
-                  ),
+                    const SizedBox(height: 8),
 
-                  Text(
-                    post.description,
-                  ),
+                    Text(
+                      post.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight:
+                        FontWeight.bold,
+                      ),
+                    ),
 
-                  const SizedBox(
-                    height: 10,
-                  ),
+                    const SizedBox(height: 8),
 
-                  Text(
-                    'Posted by ${post.authorName}',
-                  ),
-                ],
+                    Text(post.description),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      "Posted by ${post.authorName}",
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
+import 'register_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:localbuzz_app/features/auth/screens/splash_screen.dart';
 import 'package:localbuzz_app/features/navigation/main_screen.dart';
 import '../../../core/storage/token_storage.dart';
-import '../../feed/feed_screen.dart';
-import '../../home/home_screen.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -15,7 +13,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
+  String selectedRole = "USER";
   bool isLoading = false;
   String result = '';
 
@@ -34,24 +32,31 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final token = response.data['token'];
-
+      final role = response.data['role'];
+      if (role.toString() != selectedRole) {
+        throw DioException(
+          requestOptions: RequestOptions(path: '/users/login'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/users/login'),
+            statusCode: 403,
+            data: "Please select the correct role.",
+          ),
+        );
+      }
       await TokenStorage.saveToken(token);
+      await TokenStorage.saveRole(role);
 
-      final savedToken = await TokenStorage.getToken();
 
-      print('TOKEN SAVED: $savedToken');
       if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const MainScreen(),
+          builder: (_) => MainScreen(
+            role: role,
+          ),
         ),
       );
-
-      setState(() {
-        result = response.data.toString();
-      });
 
       if (!mounted) return;
 
@@ -61,19 +66,52 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } catch (e) {
-      setState(() {
-        result = e.toString();
-      });
 
-      print(e);
+      String errorMessage = "Something went wrong";
+
+      if (e is DioException) {
+
+        final statusCode = e.response?.statusCode;
+
+        switch (statusCode) {
+
+          case 401:
+            errorMessage = "Invalid email or password";
+            break;
+
+          case 403:
+            errorMessage =
+                e.response?.data?.toString() ??
+                    "Your account is awaiting admin approval.";
+            break;
+
+          case 404:
+            errorMessage = "User not found";
+            break;
+
+          case 409:
+            errorMessage = "Email already registered";
+            break;
+
+          default:
+            errorMessage =
+                e.response?.data?.toString() ??
+                    "Something went wrong";
+        }
+      }
+
+      setState(() {
+        result = errorMessage;
+      });
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(errorMessage),
         ),
       );
+
     } finally {
       if (mounted) {
         setState(() {
@@ -99,6 +137,40 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+
+            DropdownButtonFormField<String>(
+              value: selectedRole,
+              decoration: const InputDecoration(
+                labelText: 'Login As',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'USER',
+                  child: Text('User'),
+                ),
+                DropdownMenuItem(
+                  value: 'OWNER',
+                  child: Text('Business Owner'),
+                ),
+                DropdownMenuItem(
+                  value: 'COMMUNITY_ADMIN',
+                  child: Text('Community Admin'),
+                ),
+                DropdownMenuItem(
+                  value: 'ADMIN',
+                  child: Text('Admin'),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  selectedRole = value!;
+                });
+              },
+            ),
+
+            const SizedBox(height: 16),
+
             TextField(
               controller: emailController,
               decoration: const InputDecoration(
@@ -109,6 +181,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 16),
             TextField(
               controller: passwordController,
+              obscureText: true,
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
@@ -126,9 +199,27 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(result),
+
+            if (result.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  result,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RegisterScreen(),
+                  ),
+                );
+              },
+              child: const Text(
+                "Don't have an account? Register",
               ),
             ),
           ],
