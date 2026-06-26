@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../../core/utils/default_business_image.dart';
 import '../auth/models/business_profile.dart';
 import '../auth/services/business_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,8 +59,7 @@ class _BusinessDetailsScreenState
 
     } catch (e, stackTrace) {
 
-      print('BUSINESS ERROR: $e');
-      print(stackTrace);
+
 
       setState(() {
         isLoading = false;
@@ -96,7 +95,17 @@ class _BusinessDetailsScreenState
           crossAxisAlignment:
           CrossAxisAlignment.start,
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                getBusinessImage(business!.category),
+                height: 220,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
 
+            const SizedBox(height: 16),
             Text(
               business!.name,
               style:

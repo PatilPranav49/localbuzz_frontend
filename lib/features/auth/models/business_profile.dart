@@ -9,7 +9,7 @@ class BusinessProfile {
   final List<FeedItem> recentUpdates;
   final double latitude;
   final double longitude;
-
+  final String coverImageUrl;
   BusinessProfile({
     required this.id,
     required this.name,
@@ -19,6 +19,7 @@ class BusinessProfile {
     required this.recentUpdates,
     required this.latitude,
     required this.longitude,
+    required this.coverImageUrl,
   });
 
   factory BusinessProfile.fromJson(
@@ -31,6 +32,7 @@ class BusinessProfile {
       description: json['description'],
       latitude: json['latitude'],
       longitude: json['longitude'],
+      coverImageUrl: json['coverImageUrl'],
       recentUpdates:
       (json['recentUpdates'] as List)
           .map(

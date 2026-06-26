@@ -10,7 +10,7 @@ import '../auth/models/feed_item.dart';
 import '../auth/services/feed_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../business/business_details_screen.dart';
-
+import '../../core/utils/default_business_image.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -47,8 +47,56 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     initializeFeed();
   }
+  Future<bool> requestLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
+    if (!serviceEnabled) {
+      return false;
+    }
+
+    LocationPermission permission =
+    await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return false;
+    }
+
+    return true;
+  }
   Future<void> initializeFeed() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Location permission permanently denied. Enable it from Settings.",
+          ),
+        ),
+      );
+
+      await Geolocator.openAppSettings();
+      return;
+    }
+
+    if (!await requestLocationPermission()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Location permission is required."),
+        ),
+      );
+
+      return;
+    }
 
     Position position =
     await Geolocator.getCurrentPosition();
@@ -60,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   bool isLoading = true;
   Future<void> loadFeed() async {
-    print('LOAD FEED CALLED');
+
     try {
       final result =
       await feedService.getFeed();
@@ -70,7 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoading = false;
       });
     } catch (e) {
-      print('ERROR: $e');
       setState(() {
         isLoading = false;
       });
@@ -322,24 +369,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         CrossAxisAlignment
                             .start,
                         children: [
-                          Container(
-                            height: 160,
-                            width:
-                            double.infinity,
-                            decoration:
-                            BoxDecoration(
-                              color: Colors
-                                  .grey
-                                  .shade300,
-                              borderRadius:
-                              BorderRadius.circular(
-                                12,
-                              ),
-                            ),
-                            child:
-                            const Icon(
-                              Icons.store,
-                              size: 60,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              getBusinessImage(item.category ?? 'OTHER'),
+                              height: 160,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
                             ),
                           ),
 
@@ -500,7 +536,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (searchQuery.isNotEmpty) {
         url += '&search=$searchQuery';
       }
-      print('URL: $url');
       final result =
       await feedService.getFilteredFeed(
         url,
@@ -513,7 +548,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     }catch (e) {
 
-      print('BUSINESS ERROR: $e');
       if (!mounted) return;
       setState(() {
         isLoading = false;

@@ -1,5 +1,5 @@
 
-import 'theme/app_theme.dart';
+import '../theme/app_theme.dart';
 import 'package:flutter/material.dart';
 class BuzzGradientButton extends StatelessWidget {
   final String label;

@@ -23,8 +23,7 @@ class CommunityService {
         'Authorization': 'Bearer $token',
       },
     );
-    print(response.statusCode);
-    print(response.body);
+
     final data =
     jsonDecode(response.body) as List;
 

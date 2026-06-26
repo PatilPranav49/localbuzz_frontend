@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/theme/app_theme.dart';
 import 'features/auth/screens/splash_screen.dart';
 
 class LocalBuzzApp extends StatelessWidget {
@@ -10,9 +11,9 @@ class LocalBuzzApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'LocalBuzz',
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       home: const SplashScreen(),
     );
   }
